@@ -18,10 +18,22 @@ class AESServiceImpl : CryptoService {
         return keyGenerator.generateKey()
     }
 
-    override suspend fun encryptText(text: String, key: SecretKey): Pair<ByteArray, ByteArray> =
+    override suspend fun encryptText(text: String, key: SecretKey): Pair<ByteArray, ByteArray>? =
         withContext(Dispatchers.Default) {
             cipher.init(Cipher.ENCRYPT_MODE, key)
-            return@withContext cipher.doFinal(text.toByteArray()) to cipher.iv
+            val data = try {
+                cipher.doFinal(text.toByteArray())
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return@withContext null
+            }
+            val iv = try {
+                cipher.iv
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return@withContext null
+            }
+            return@withContext data to iv
         }
 
     override suspend fun decryptText(textByte: ByteArray, iv: ByteArray, key: SecretKey): String? =

@@ -24,6 +24,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val cryptoSession: CryptoSession = CryptoSessionImpl()
+            val aesService = cryptoSession.getAESService()
+
             AndroidCryptoImplTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -31,15 +33,14 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Button(onClick = {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            val aesService = cryptoSession.getAESService()
+                        CoroutineScope(Dispatchers.Main).launch {
                             val key = aesService.generateKey(128)
                             val myText = "hello world yoohooo"
                             val encrypted = aesService.encryptText(myText, key)
-                            Log.d(TAG, "onCreate: ${String(encrypted.first)}")
+                            Log.d(TAG, "onCreate: ${String(encrypted!!.first)}")
                             val decrypted =
                                 aesService.decryptText(encrypted.first, encrypted.second, key)
-                            Log.d(TAG, "onCreate: decrypted ${decrypted?:"nulle"}")
+                            Log.d(TAG, "onCreate: decrypted $decrypted")
                         }
                     }) {
                         Text(text = "click")
