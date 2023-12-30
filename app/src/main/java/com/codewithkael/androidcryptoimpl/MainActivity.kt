@@ -18,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private val TAG = "MainActivity"
+    private val tag = "MainActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,12 +35,14 @@ class MainActivity : ComponentActivity() {
                     Button(onClick = {
                         CoroutineScope(Dispatchers.Main).launch {
                             val key = aesService.generateKey(128)
+                            val a = aesService.convertKeyToString(key)
+                            val b = aesService.convertStringToKey(a)
                             val myText = "hello world yoohooo"
-                            val encrypted = aesService.encryptText(myText, key)
-                            Log.d(TAG, "onCreate: ${String(encrypted!!.first)}")
+                            val encrypted = aesService.encryptText(myText, b)
+                            Log.d(tag, "onCreate: ${encrypted!!.first}")
                             val decrypted =
-                                aesService.decryptText(encrypted.first, encrypted.second, key)
-                            Log.d(TAG, "onCreate: decrypted $decrypted")
+                                aesService.decryptText(encrypted.first, encrypted.second, b)
+                            Log.d(tag, "onCreate: decrypted $decrypted")
                         }
                     }) {
                         Text(text = "click")
