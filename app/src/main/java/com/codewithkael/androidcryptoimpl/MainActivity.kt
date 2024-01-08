@@ -39,9 +39,9 @@ class MainActivity : ComponentActivity() {
                             val b = aesService.convertStringToKey(a)
                             val myText = "hello world yoohooo"
                             val encrypted = aesService.encryptText(myText, b)
-                            Log.d(tag, "onCreate: ${encrypted!!.first}")
+                            Log.d(tag, "onCreate: ${encrypted!!}")
                             val decrypted =
-                                aesService.decryptText(encrypted.first, encrypted.second, b)
+                                aesService.decryptText(encrypted, b)
                             Log.d(tag, "onCreate: decrypted $decrypted")
                         }
                     }) {

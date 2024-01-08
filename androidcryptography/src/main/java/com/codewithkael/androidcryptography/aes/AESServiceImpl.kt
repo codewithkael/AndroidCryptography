@@ -3,8 +3,15 @@ package com.codewithkael.androidcryptography.aes
 import com.codewithkael.androidcryptography.CryptoService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.security.Security
+import java.util.Arrays
 import java.util.Base64
 import javax.crypto.Cipher
+import javax.crypto.CipherOutputStream
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
@@ -13,6 +20,8 @@ import javax.crypto.spec.SecretKeySpec
 class AESServiceImpl : CryptoService {
 
     private val symmetricAlgorithm = "AES/CBC/PKCS5PADDING"
+    private val ivSize = 16 //depending on our algorithm
+
     private var cipher: Cipher = Cipher.getInstance(symmetricAlgorithm)
     private val keyGenerator: KeyGenerator = KeyGenerator.getInstance("AES")
 
@@ -30,35 +39,61 @@ class AESServiceImpl : CryptoService {
         return SecretKeySpec(decodedBytes, symmetricAlgorithm)
     }
 
-    override suspend fun encryptText(text: String, key: SecretKey): Pair<String, String>? =
+    override suspend fun encryptText(text: String, key: SecretKey): String? =
         withContext(Dispatchers.Default) {
             cipher.init(Cipher.ENCRYPT_MODE, key)
-            val data = try {
-                val encryptedBytes = cipher.doFinal(text.toByteArray())
-                val encryptedBytesB64 = Base64.getEncoder().encode(encryptedBytes)
-                String(encryptedBytesB64)
+            val encryptedBytes = try {
+                cipher.doFinal(text.toByteArray())
             } catch (e: Exception) {
                 e.printStackTrace()
                 return@withContext null
             }
-            val iv = try {
-                String(Base64.getEncoder().encode(cipher.iv))
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return@withContext null
-            }
-            return@withContext data to iv
+            val iv = cipher.iv
+            val combinedIvAndEncryptedData = iv + encryptedBytes
+            return@withContext Base64.getEncoder().encodeToString(combinedIvAndEncryptedData)
         }
 
-    override suspend fun decryptText(text: String, iv: String, key: SecretKey): String? =
+    override suspend fun decryptText(encryptedText: String, key: SecretKey): String? =
         withContext(Dispatchers.Default) {
-            val keyIv = Base64.getDecoder().decode(iv)
-            cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(keyIv))
-            return@withContext try {
-                String(cipher.doFinal(Base64.getDecoder().decode(text)))
+            val decodedData = Base64.getDecoder().decode(encryptedText)
+            val iv = Arrays.copyOfRange(decodedData, 0, ivSize)
+            val encryptedBytes = Arrays.copyOfRange(decodedData, ivSize, decodedData.size)
+
+            cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(iv))
+            try {
+                val decryptedBytes = cipher.doFinal(encryptedBytes)
+                String(decryptedBytes)
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
             }
         }
+
+    override suspend fun encryptFile(inputFile: File, outPutPath: String, key: SecretKey): File? {
+        return try {
+            Security.addProvider(BouncyCastleProvider())
+            cipher.init(Cipher.ENCRYPT_MODE, key)
+            val iv = cipher.iv
+
+            val inputStream = FileInputStream(inputFile)
+
+            val outputFile = File(outPutPath)
+            val outputStream = FileOutputStream(outputFile)
+            outputStream.write(iv)
+
+            val cipherOutputStream = CipherOutputStream(outputStream, cipher)
+            val buffer = ByteArray(1024)
+            var bytesRead: Int
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                cipherOutputStream.write(buffer, 0, bytesRead)
+            }
+            cipherOutputStream.close()
+            inputStream.close()
+
+            outputFile
+        } catch (e: Exception) {
+            null
+        }
+
+    }
 }
