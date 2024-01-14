@@ -1,6 +1,7 @@
 package com.codewithkael.androidcryptoimpl
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -24,6 +25,9 @@ class MainActivity : ComponentActivity() {
     private val cryptoSession: CryptoSession = CryptoSessionImpl()
     private val aesService = cryptoSession.getAESService()
     private val key = aesService.generateKey(128)
+
+    private val rsaService = cryptoSession.getRSAService()
+    val rsaKey = rsaService.generateRSAKeyPair(2048)
 
     private var filePickerLauncher: ActivityResultLauncher<String>? = null
     override fun onStart() {
@@ -78,17 +82,20 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Button(onClick = {
-                        filePickerLauncher?.launch("*/*")
-//                        CoroutineScope(Dispatchers.Main).launch {
-//                            val a = aesService.convertKeyToString(key)
-//                            val b = aesService.convertStringToKey(a)
-//                            val myText = "hello world yoohooo"
-//                            val encrypted = aesService.encryptText(myText, b)
-//                            Log.d(tag, "onCreate: ${encrypted!!}")
-//                            val decrypted =
-//                                aesService.decryptText(encrypted, b)
-//                            Log.d(tag, "onCreate: decrypted $decrypted")
-//                        }
+//                        filePickerLauncher?.launch("*/*")
+
+                        CoroutineScope(Dispatchers.Main).launch {
+                            val textToEncrypt = "Hello world this is masoud"
+                            val encryptedText = rsaService.encryptText(textToEncrypt,rsaKey)
+                            Log.d("TAG", "onCreate: encrypted $encryptedText")
+
+                            val converted = rsaService.convertKeyPairToBase64String(rsaKey)
+                            val deConverted = rsaService.convertBase64StringToKeyPair(converted.first,converted.second)
+                            val decryptedText =
+                                encryptedText?.let { rsaService.decryptText(it,deConverted) }
+                            Log.d("TAG", "onCreate: decryptedText $decryptedText")
+
+                        }
                     }) {
                         Text(text = "click")
                     }

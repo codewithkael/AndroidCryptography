@@ -1,6 +1,5 @@
 package com.codewithkael.androidcryptography.aes
 
-import com.codewithkael.androidcryptography.CryptoService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -18,7 +17,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-class AESServiceImpl : CryptoService {
+class AESServiceImpl : AESService {
 
     private val symmetricAlgorithm = "AES/CBC/PKCS5PADDING"
     private val ivSize = 16 //depending on our algorithm

@@ -1,9 +1,9 @@
-package com.codewithkael.androidcryptography
+package com.codewithkael.androidcryptography.aes
 
 import java.io.File
 import javax.crypto.SecretKey
 
-interface CryptoService {
+interface AESService {
     fun generateKey(keyLength: Int): SecretKey
     fun convertKeyToString(secretKey: SecretKey): String
     fun convertStringToKey(keyString: String): SecretKey
