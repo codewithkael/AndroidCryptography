@@ -15,13 +15,10 @@ import androidx.compose.ui.Modifier
 import com.codewithkael.androidcryptography.CryptoSession
 import com.codewithkael.androidcryptography.CryptoSessionImpl
 import com.codewithkael.androidcryptography.utils.FileHelper
-import com.codewithkael.androidcryptography.utils.osDownloadDirectory
 import com.codewithkael.androidcryptoimpl.ui.theme.AndroidCryptoImplTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
@@ -30,7 +27,9 @@ class MainActivity : ComponentActivity() {
     private val key = aesService.generateKey(128)
 
     private val rsaService = cryptoSession.getRSAService()
-    val rsaKey = rsaService.generateRSAKeyPair(2048)
+    private val rsaKey = rsaService.generateRSAKeyPair(2048)
+
+    private val hashService = cryptoSession.getHashService(CryptoSession.HashFunctions.SHA512)
 
     private var filePickerLauncher: ActivityResultLauncher<String>? = null
     override fun onStart() {
@@ -53,25 +52,37 @@ class MainActivity : ComponentActivity() {
                             split[0],
                             "." + split[1]
                         )
-                    val pathToEncrypt = osDownloadDirectory() + fileName + ".enc"
-                    val encryptedFile = File(pathToEncrypt)
-                    fileToEncrypt?.let {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            aesService.encryptFile(it, encryptedFile, key)?.let { encrypted ->
-                                val decryptedOutput = osDownloadDirectory() + "decrypted-${
-                                    UUID.randomUUID().toString().substring(0, 4)
-                                }" + fileName
-                                val decryptedOutputFile = File(decryptedOutput)
-                                aesService.decryptFile(
-                                    encrypted,
-                                    decryptedOutputFile,
-                                    key
-                                )?.let {
-                                    Log.d(TAG, "onStart2: ${it.path}")
-                                }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        fileToEncrypt?.let {
+                            hashService.hash(it).let { hash ->
+                                Log.d(TAG, "onStart: hash ${hash.toList()}")
+                            }
+
+                            hashService.hash("Salam chetori masoud").let { hash ->
+                                Log.d(TAG, "onStart: hash 2 ${hash.toList()}")
                             }
                         }
+
                     }
+//                    val pathToEncrypt = osDownloadDirectory() + fileName + ".enc"
+//                    val encryptedFile = File(pathToEncrypt)
+//                    fileToEncrypt?.let {
+//                        CoroutineScope(Dispatchers.Main).launch {
+//                            aesService.encryptFile(it, encryptedFile, key)?.let { encrypted ->
+//                                val decryptedOutput = osDownloadDirectory() + "decrypted-${
+//                                    UUID.randomUUID().toString().substring(0, 4)
+//                                }" + fileName
+//                                val decryptedOutputFile = File(decryptedOutput)
+//                                aesService.decryptFile(
+//                                    encrypted,
+//                                    decryptedOutputFile,
+//                                    key
+//                                )?.let {
+//                                    Log.d(TAG, "onStart2: ${it.path}")
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             }
     }
