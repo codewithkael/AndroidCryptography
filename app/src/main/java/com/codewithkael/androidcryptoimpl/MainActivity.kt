@@ -30,6 +30,8 @@ class MainActivity : ComponentActivity() {
     private val rsaKey = rsaService.generateRSAKeyPair(2048)
 
     private val hashService = cryptoSession.getHashService(CryptoSession.HashFunctions.SHA512)
+    private val signatureService =
+        cryptoSession.getRSADigitalSignatureService(rsaService = rsaService)
 
     private var filePickerLauncher: ActivityResultLauncher<String>? = null
     override fun onStart() {
@@ -99,7 +101,16 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Button(onClick = {
-                        filePickerLauncher?.launch("*/*")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            val text = "salam chetori"
+                            val signedText = signatureService.sign(text, rsaKey.private)
+                            signedText?.let {
+                                val isTrue =
+                                    signatureService.verify(it, "salam chetori", rsaKey.public)
+                                Log.d(TAG, "onCreate: $isTrue")
+                            }
+                        }
+//                        filePickerLauncher?.launch("*/*")
 
 //                        CoroutineScope(Dispatchers.Main).launch {
 //                            val textToEncrypt = "Hello world this is masoud"

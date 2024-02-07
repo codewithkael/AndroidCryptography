@@ -9,6 +9,8 @@ import com.codewithkael.androidcryptography.hash.SHA256Hash
 import com.codewithkael.androidcryptography.hash.SHA512Hash
 import com.codewithkael.androidcryptography.rsa.RSAService
 import com.codewithkael.androidcryptography.rsa.RSAServiceImpl
+import com.codewithkael.androidcryptography.signiture.DigitalSignatureService
+import com.codewithkael.androidcryptography.signiture.RSADigitalSignature
 
 class CryptoSessionImpl : CryptoSession {
 
@@ -26,6 +28,10 @@ class CryptoSessionImpl : CryptoSession {
             SHA512 -> SHA512Hash()
             MD5 -> MD5Hash()
         }
+    }
+
+    override fun getRSADigitalSignatureService(rsaService: RSAService): DigitalSignatureService {
+        return RSADigitalSignature(rsaService)
     }
 
 

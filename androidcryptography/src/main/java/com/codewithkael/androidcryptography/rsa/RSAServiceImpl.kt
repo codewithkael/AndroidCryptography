@@ -7,6 +7,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.PrivateKey
+import java.security.PublicKey
 import java.security.Security
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -20,10 +22,10 @@ class RSAServiceImpl : RSAService {
     private var rsaCipher: Cipher = Cipher.getInstance(asymmetricAlgorithm)
     private val rsaKeyPairGenerator: KeyPairGenerator = KeyPairGenerator.getInstance("RSA")
 
-    override suspend fun encryptText(text: String, keyPair: KeyPair): String? =
+    override suspend fun encryptText(text: String, publicKey: PublicKey): String? =
         withContext(Dispatchers.Default) {
             Security.addProvider(BouncyCastleProvider())
-            rsaCipher.init(Cipher.ENCRYPT_MODE, keyPair.public)
+            rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey)
             val encryptedBytes = try {
                 rsaCipher.doFinal(text.toByteArray())
             } catch (e: Exception) {
@@ -33,10 +35,37 @@ class RSAServiceImpl : RSAService {
             return@withContext Base64.getEncoder().encodeToString(encryptedBytes)
         }
 
-    override suspend fun decryptText(encryptedText: String, keyPair: KeyPair): String? =
+    override suspend fun encryptText(text: String, privateKey: PrivateKey): String? =
         withContext(Dispatchers.Default) {
             Security.addProvider(BouncyCastleProvider())
-            rsaCipher.init(Cipher.DECRYPT_MODE, keyPair.private)
+            rsaCipher.init(Cipher.ENCRYPT_MODE, privateKey)
+            val encryptedBytes = try {
+                rsaCipher.doFinal(text.toByteArray())
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return@withContext null
+            }
+            return@withContext Base64.getEncoder().encodeToString(encryptedBytes)
+        }
+
+    override suspend fun decryptText(encryptedText: String, publicKey: PublicKey): String? =
+        withContext(Dispatchers.Default) {
+            Security.addProvider(BouncyCastleProvider())
+            rsaCipher.init(Cipher.DECRYPT_MODE, publicKey)
+            val decodedData = Base64.getDecoder().decode(encryptedText)
+            try {
+                val decryptedBytes = rsaCipher.doFinal(decodedData)
+                String(decryptedBytes)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+
+    override suspend fun decryptText(encryptedText: String, privateKey: PrivateKey): String? =
+        withContext(Dispatchers.Default) {
+            Security.addProvider(BouncyCastleProvider())
+            rsaCipher.init(Cipher.DECRYPT_MODE, privateKey)
             val decodedData = Base64.getDecoder().decode(encryptedText)
             try {
                 val decryptedBytes = rsaCipher.doFinal(decodedData)
