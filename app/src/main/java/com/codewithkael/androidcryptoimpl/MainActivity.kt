@@ -20,8 +20,11 @@ import com.codewithkael.androidcryptoimpl.ui.theme.AndroidCryptoImplTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
+    private val TAG = "MainActivity"
     private val cryptoSession: CryptoSession = CryptoSessionImpl()
     private val aesService = cryptoSession.getAESService()
     private val key = aesService.generateKey(128)
@@ -50,19 +53,22 @@ class MainActivity : ComponentActivity() {
                             split[0],
                             "." + split[1]
                         )
-                    val encryptedFilePath = osDownloadDirectory() + fileName + ".enc"
+                    val pathToEncrypt = osDownloadDirectory() + fileName + ".enc"
+                    val encryptedFile = File(pathToEncrypt)
                     fileToEncrypt?.let {
                         CoroutineScope(Dispatchers.Main).launch {
-                            val encryptedFile = aesService.encryptFile(it, encryptedFilePath, key)
-
-                            val decryptedOutput = osDownloadDirectory() + "decrypted-" + fileName
-
-                            encryptedFile?.let { it1 ->
+                            aesService.encryptFile(it, encryptedFile, key)?.let { encrypted ->
+                                val decryptedOutput = osDownloadDirectory() + "decrypted-${
+                                    UUID.randomUUID().toString().substring(0, 4)
+                                }" + fileName
+                                val decryptedOutputFile = File(decryptedOutput)
                                 aesService.decryptFile(
-                                    it1,
-                                    decryptedOutput,
+                                    encrypted,
+                                    decryptedOutputFile,
                                     key
-                                )
+                                )?.let {
+                                    Log.d(TAG, "onStart2: ${it.path}")
+                                }
                             }
                         }
                     }
@@ -82,20 +88,20 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Button(onClick = {
-//                        filePickerLauncher?.launch("*/*")
+                        filePickerLauncher?.launch("*/*")
 
-                        CoroutineScope(Dispatchers.Main).launch {
-                            val textToEncrypt = "Hello world this is masoud"
-                            val encryptedText = rsaService.encryptText(textToEncrypt,rsaKey)
-                            Log.d("TAG", "onCreate: encrypted $encryptedText")
-
-                            val converted = rsaService.convertKeyPairToBase64String(rsaKey)
-                            val deConverted = rsaService.convertBase64StringToKeyPair(converted.first,converted.second)
-                            val decryptedText =
-                                encryptedText?.let { rsaService.decryptText(it,deConverted) }
-                            Log.d("TAG", "onCreate: decryptedText $decryptedText")
-
-                        }
+//                        CoroutineScope(Dispatchers.Main).launch {
+//                            val textToEncrypt = "Hello world this is masoud"
+//                            val encryptedText = rsaService.encryptText(textToEncrypt,rsaKey)
+//                            Log.d("TAG", "onCreate: encrypted $encryptedText")
+//
+//                            val converted = rsaService.convertKeyPairToBase64String(rsaKey)
+//                            val deConverted = rsaService.convertBase64StringToKeyPair(converted.first,converted.second)
+//                            val decryptedText =
+//                                encryptedText?.let { rsaService.decryptText(it,deConverted) }
+//                            Log.d("TAG", "onCreate: decryptedText $decryptedText")
+//
+//                        }
                     }) {
                         Text(text = "click")
                     }

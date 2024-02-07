@@ -69,7 +69,7 @@ class AESServiceImpl : AESService {
             }
         }
 
-    override suspend fun encryptFile(inputFile: File, outPutPath: String, key: SecretKey): File? =
+    override suspend fun encryptFile(inputFile:File,outputFile:File,key: SecretKey): File? =
         withContext(Dispatchers.IO) {
             return@withContext try {
                 Security.addProvider(BouncyCastleProvider())
@@ -78,7 +78,6 @@ class AESServiceImpl : AESService {
 
                 val inputStream = FileInputStream(inputFile)
 
-                val outputFile = File(outPutPath)
                 val outputStream = FileOutputStream(outputFile)
                 outputStream.write(iv)
 
@@ -97,7 +96,7 @@ class AESServiceImpl : AESService {
             }
         }
 
-    override suspend fun decryptFile(encryptedFile: File, outputPath: String, key: SecretKey): File? =
+    override suspend fun decryptFile(encryptedFile: File, outputFile: File, key: SecretKey): File? =
         withContext(Dispatchers.IO){
         return@withContext try {
             Security.addProvider(BouncyCastleProvider())
@@ -108,7 +107,6 @@ class AESServiceImpl : AESService {
 
             cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(iv))
 
-            val outputFile = File(outputPath)
             val outputStream = FileOutputStream(outputFile)
 
             val cipherInputStream = CipherInputStream(encryptedDataInputStream, cipher)

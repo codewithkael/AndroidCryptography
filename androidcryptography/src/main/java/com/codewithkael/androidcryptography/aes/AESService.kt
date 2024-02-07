@@ -9,6 +9,6 @@ interface AESService {
     fun convertStringToKey(keyString: String): SecretKey
     suspend fun encryptText(text: String, key: SecretKey): String?
     suspend fun decryptText(encryptedText: String, key: SecretKey): String?
-    suspend fun encryptFile(inputFile:File,outPutPath:String,key: SecretKey) :File?
-    suspend fun decryptFile(encryptedFile: File, outputPath: String, key: SecretKey): File?
+    suspend fun encryptFile(inputFile:File,outputFile:File,key: SecretKey) :File?
+    suspend fun decryptFile(encryptedFile: File, outputFile: File, key: SecretKey): File?
 }
